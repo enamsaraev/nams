@@ -1,0 +1,5 @@
+setup.py
+task_bookkeeping.egg-info/PKG-INFO
+task_bookkeeping.egg-info/SOURCES.txt
+task_bookkeeping.egg-info/dependency_links.txt
+task_bookkeeping.egg-info/top_level.txt
