@@ -13,10 +13,12 @@ def make_config(*config_files):
 config = make_config('config.ini')
 
 
-def make_db_connection():
+def make_db_connection(datab):
 	"""Возвращает объект подключения к БД"""
-
-	db_name = config.get('db', 'db_name')
+	if datab == 1:
+		db_name = config.get('db', 'db_name')
+	if datab == 2:
+		db_name = config.get('db2', 'db_name2')
 
 	conn = sqlite3.connect(db_name, detect_types=sqlite3.PARSE_DECLTYPES) 
 	conn.row_factory = sqlite3.Row

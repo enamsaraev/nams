@@ -2,9 +2,9 @@ from datetime import datetime, time
 
 
 
-SQL_CREATE_NEW_PAYMENT = 'INSERT INTO payment_table (title, price, quantity, paydate, availability) VALUES (?, ?, ?, ?, ?)'
+SQL_CREATE_NEW_PAYMENT = 'INSERT INTO payment_table (title, price, quantity, paydate) VALUES (?, ?, ?, ?)'
 
-SQL_UPDATE_PAYMENT = 'UPDATE payment_table SET title=?, price=?, quantity=?, paydate=?, availability=? WHERE id=?'
+SQL_UPDATE_PAYMENT = 'UPDATE payment_table SET price=?, quantity=?, paydate=? WHERE id=?'
 
 SQL_SELECT_ALL_PAYMENTS = 'SELECT id, title, price, amount, availability FROM payment_table'
 
@@ -23,18 +23,19 @@ def initialize(conn, creation_schema):
 
 
 
-def create_payment(conn, title, price, quantity, paydate, availability):
+def create_payment(conn, title, price, quantity, paydate):
 	"""Сохраняет новый платеж в БД."""
-	conn.execute(SQL_CREATE_NEW_PAYMENT, (title, price, quantity, paydate, availability))
+	conn.execute(SQL_CREATE_NEW_PAYMENT, (title, price, quantity, paydate))
 	conn.execute('UPDATE payment_table SET amount = price*quantity') 
+	conn.execute('UPDATE payment_table SET availability = quantity') 
 
 
 
-def update_payment(conn, pay_id, title, price, quantity, paydate, availability):
+def update_payment(conn, pr_id, price, quantity, paydate):
 	"""Обновляет платеж в БД"""
-	conn.execute(SQL_UPDATE_PAYMENT, (title, price, quantity, paydate, availability, pay_id))
-	conn.execute('UPDATE payment_table SET availability=availability+quantity WHERE id')
-	conn.execute('UPDATE payment_table SET amount = price*availability WHERE id')
+	conn.execute(SQL_UPDATE_PAYMENT, (price, quantity, paydate, pr_id))
+	conn.execute('UPDATE payment_table SET availability=availability+quantity WHERE id=?', (pr_id,))
+	conn.execute('UPDATE payment_table SET amount = price*availability WHERE id=?', (pr_id,))
 
 
 
@@ -58,7 +59,7 @@ def get_pays_per_date(conn, date_from, date_to):
 
 def get_large_payments(conn, price):
 	"""Возвращает самые крупные платежи из БД"""
-	return conn.execute(SQL_SELECT_ALL_TASKS, (amount)).fetchall()
+	return conn.execute(SQL_SELECT_ALL_TASKS, (amount,)).fetchall()
 
 
 
@@ -67,9 +68,17 @@ def get_top_pos(conn, top_pos):
 	return conn.execute('SELECT  id, title, price, quantity, availability, amount FROM payment_table ORDER BY amount DESC LIMIT ?', [top_pos]).fetchall()
 
 
-def get_sale_product(conn, pay_id, availability):
-	conn.execute('UPDATE payment_table SET availability=availability-? WHERE id=?', (availability, pay_id))
-	conn.execute('UPDATE payment_table SET amount = price*availability WHERE id')
+def get_sale_product(conn, pr_title, availability_product):
+	conn.execute('UPDATE payment_table SET availability=availability-? WHERE title=?', (availability_product, pr_title))
+	conn.execute('UPDATE payment_table SET amount=price*availability WHERE title=?', (pr_title,))
+
+
+def set_sold_product(conn, title, pr_sold, pr_soldprice, pr_date):
+	conn.execute('INSERT INTO payment_table2 (title, sold, soldprice, prdate) VALUES (?, ?, ?, ?)', (title, pr_sold, pr_soldprice, pr_date))
+	conn.execute('UPDATE payment_table2 SET soldprice=soldprice*sold WHERE id=MAX')
+
+def get_sold_product(conn, title):
+	return conn.execute('SELECT id, title, sold, soldprice, prdate FROM payment_table2 WHERE title=?', (title,)).fetchall()
 
 
 
